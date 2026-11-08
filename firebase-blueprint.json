@@ -1,0 +1,149 @@
+{
+  "entities": {
+    "Category": {
+      "title": "Category",
+      "description": "Category for classifying Minecraft builds",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Category name" },
+        "slug": { "type": "string", "description": "Category slug identifier" },
+        "thumbnailUrl": { "type": "string", "description": "Thumbnail icon/image url" },
+        "sortOrder": { "type": "integer", "description": "Sorting priority" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "slug", "sortOrder", "createdAt", "updatedAt"]
+    },
+    "Build": {
+      "title": "Build",
+      "description": "A Minecraft build guide entry",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Build title" },
+        "slug": { "type": "string", "description": "URL slug" },
+        "description": { "type": "string", "description": "Detailed overview of the build" },
+        "categoryId": { "type": "string", "description": "Associated category ID" },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard", "Expert"] },
+        "edition": { "type": "string", "enum": ["Java", "Bedrock", "Both"] },
+        "dimensions": { "type": "string", "description": "Dimensions like 15x20x12" },
+        "estimatedTime": { "type": "string", "description": "Estimated time like 45 mins" },
+        "thumbnailUrl": { "type": "string", "description": "Thumbnail image URL" },
+        "featured": { "type": "boolean", "description": "Whether highlighted on home screen" },
+        "status": { "type": "string", "enum": ["published", "draft"] },
+        "totalSteps": { "type": "integer", "description": "Total step count" },
+        "createdBy": { "type": "string", "description": "User ID of creator" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "categoryId", "difficulty", "edition", "status", "totalSteps", "createdBy", "createdAt", "updatedAt"]
+    },
+    "BuildStep": {
+      "title": "BuildStep",
+      "description": "An individual image-by-image step in a build guide",
+      "type": "object",
+      "properties": {
+        "buildId": { "type": "string", "description": "Parent build ID" },
+        "stepNumber": { "type": "integer", "description": "1-based step index" },
+        "sortOrder": { "type": "integer", "description": "Order of display" },
+        "imageUrl": { "type": "string", "description": "Image URL of the build step" },
+        "description": { "type": "string", "description": "Guidance or placement instructions" },
+        "blockRequirements": {
+          "type": "array",
+          "description": "List of block requirements for this step"
+        },
+        "status": { "type": "string", "enum": ["published", "draft"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["buildId", "stepNumber", "sortOrder", "status", "createdAt", "updatedAt"]
+    },
+    "BlockAsset": {
+      "title": "BlockAsset",
+      "description": "A Minecraft block asset in the block library",
+      "type": "object",
+      "properties": {
+        "blockName": { "type": "string", "description": "Display name of block" },
+        "normalizedName": { "type": "string", "description": "Lowercase normalized identifier" },
+        "imageUrl": { "type": "string", "description": "Image URL or asset resource name" },
+        "filename": { "type": "string", "description": "Original file name" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["blockName", "normalizedName", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role and account info",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Auth UID" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "email": { "type": "string", "description": "User email address" },
+        "photoURL": { "type": "string", "description": "Avatar photo URL" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "accountStatus": { "type": "string", "enum": ["active", "suspended"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "displayName", "email", "role", "accountStatus", "createdAt", "updatedAt"]
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "description": "A user's bookmarked build",
+      "type": "object",
+      "properties": {
+        "buildId": { "type": "string", "description": "Favorited build ID" },
+        "buildTitle": { "type": "string", "description": "Cached title" },
+        "thumbnailUrl": { "type": "string", "description": "Cached thumbnail" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["buildId", "createdAt"]
+    },
+    "BuildingProgress": {
+      "title": "BuildingProgress",
+      "description": "User progress through a build guide",
+      "type": "object",
+      "properties": {
+        "buildId": { "type": "string", "description": "Target build ID" },
+        "currentStep": { "type": "integer", "description": "Last viewed or active step" },
+        "completedSteps": { "type": "integer", "description": "Total steps completed" },
+        "isCompleted": { "type": "boolean", "description": "Whether build is finished" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["buildId", "currentStep", "completedSteps", "isCompleted", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Categories for builds"
+    },
+    "/builds/{buildId}": {
+      "schema": "Build",
+      "description": "Published and draft Minecraft builds"
+    },
+    "/buildSteps/{stepId}": {
+      "schema": "BuildStep",
+      "description": "Steps for building guides"
+    },
+    "/blockAssets/{blockId}": {
+      "schema": "BlockAsset",
+      "description": "Minecraft block library assets"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles"
+    },
+    "/users/{userId}/favorites/{buildId}": {
+      "schema": "Favorite",
+      "description": "User favorites"
+    },
+    "/users/{userId}/progress/{buildId}": {
+      "schema": "BuildingProgress",
+      "description": "User building progress"
+    },
+    "/admins/{adminId}": {
+      "schema": "UserProfile",
+      "description": "Admin access registry"
+    }
+  }
+}

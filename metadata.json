@@ -1,0 +1,6 @@
+{
+  "name": "WBuilds",
+  "description": "WBuilds – The Ultimate Minecraft Building Guide. Step-by-step building tutorials, block requirements, blueprints, and build gallery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

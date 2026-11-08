@@ -1,0 +1,193 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Hardened Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isBootstrapAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email == 'rajkumari69920@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isBootstrapAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // --- Validation Helpers ---
+    function isValidCategory(data) {
+      return data.name is string && data.name.size() >= 1 && data.name.size() <= 60 &&
+        data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 80 &&
+        (!('thumbnailUrl' in data) || data.thumbnailUrl is string && data.thumbnailUrl.size() <= 500) &&
+        data.sortOrder is int &&
+        data.createdAt is timestamp && data.createdAt <= request.time &&
+        data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidBuild(data) {
+      return data.title is string && data.title.size() >= 2 && data.title.size() <= 120 &&
+        data.categoryId is string && data.categoryId.size() >= 1 && data.categoryId.size() <= 80 &&
+        data.difficulty in ['Easy', 'Medium', 'Hard', 'Expert'] &&
+        data.edition in ['Java', 'Bedrock', 'Both'] &&
+        data.status in ['published', 'draft'] &&
+        data.totalSteps is int && data.totalSteps >= 0 &&
+        data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 &&
+        (!('slug' in data) || data.slug is string && data.slug.size() <= 120) &&
+        (!('description' in data) || data.description is string && data.description.size() <= 2000) &&
+        (!('dimensions' in data) || data.dimensions is string && data.dimensions.size() <= 50) &&
+        (!('estimatedTime' in data) || data.estimatedTime is string && data.estimatedTime.size() <= 50) &&
+        (!('thumbnailUrl' in data) || data.thumbnailUrl is string && data.thumbnailUrl.size() <= 500) &&
+        (!('featured' in data) || data.featured is bool) &&
+        (!('selectedBlocks' in data) || data.selectedBlocks is list) &&
+        data.createdAt is timestamp && data.createdAt <= request.time &&
+        data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidBuildStep(data) {
+      return data.buildId is string && data.buildId.size() >= 1 && data.buildId.size() <= 128 &&
+        data.stepNumber is int && data.stepNumber >= 1 &&
+        data.sortOrder is int &&
+        data.status in ['published', 'draft'] &&
+        (!('imageUrl' in data) || data.imageUrl is string && data.imageUrl.size() <= 500) &&
+        (!('description' in data) || data.description is string && data.description.size() <= 1000) &&
+        (!('blockRequirements' in data) || (data.blockRequirements is list && data.blockRequirements.size() <= 100)) &&
+        data.createdAt is timestamp && data.createdAt <= request.time &&
+        data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidBlockAsset(data) {
+      return data.blockName is string && data.blockName.size() >= 1 && data.blockName.size() <= 80 &&
+        data.normalizedName is string && data.normalizedName.size() >= 1 && data.normalizedName.size() <= 80 &&
+        (!('imageUrl' in data) || data.imageUrl is string && data.imageUrl.size() <= 500) &&
+        (!('filename' in data) || data.filename is string && data.filename.size() <= 200) &&
+        data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+        data.role in ['user', 'admin'] &&
+        data.accountStatus in ['active', 'suspended'] &&
+        (!('photoURL' in data) || data.photoURL is string && data.photoURL.size() <= 500) &&
+        data.createdAt is timestamp && data.createdAt <= request.time &&
+        data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidFavorite(data) {
+      return data.buildId is string && data.buildId.size() >= 1 && data.buildId.size() <= 128 &&
+        (!('buildTitle' in data) || data.buildTitle is string && data.buildTitle.size() <= 120) &&
+        (!('thumbnailUrl' in data) || data.thumbnailUrl is string && data.thumbnailUrl.size() <= 500) &&
+        data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidProgress(data) {
+      return data.buildId is string && data.buildId.size() >= 1 && data.buildId.size() <= 128 &&
+        data.currentStep is int && data.currentStep >= 0 &&
+        data.completedSteps is int && data.completedSteps >= 0 &&
+        data.isCompleted is bool &&
+        data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // --- Collections ---
+
+    // Categories
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(categoryId) && isValidCategory(incoming());
+      allow update: if isAdmin() && isValidCategory(incoming()) && incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin();
+    }
+
+    // Builds
+    match /builds/{buildId} {
+      allow get, list: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && isValidId(buildId) && isValidBuild(incoming());
+      allow update: if isAdmin() && isValidBuild(incoming()) && incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin();
+    }
+
+    // Build Steps
+    match /buildSteps/{stepId} {
+      allow get, list: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && isValidId(stepId) && isValidBuildStep(incoming());
+      allow update: if isAdmin() && isValidBuildStep(incoming()) && incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin();
+    }
+
+    // Block Assets
+    match /blockAssets/{blockId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(blockId) && isValidBlockAsset(incoming());
+      allow update: if isAdmin() && isValidBlockAsset(incoming()) && incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin();
+    }
+
+    // Admins registry
+    match /admins/{adminId} {
+      allow get, list: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Users
+    match /users/{userId} {
+      allow get, list: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+        isValidId(userId) &&
+        incoming().userId == request.auth.uid &&
+        (incoming().role == 'user' || isBootstrapAdmin()) &&
+        isValidUserProfile(incoming());
+      allow update: if isSignedIn() && isValidUserProfile(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().userId == existing().userId &&
+        (
+          isAdmin() ||
+          (
+            request.auth.uid == userId &&
+            incoming().role == existing().role &&
+            incoming().accountStatus == existing().accountStatus
+          )
+        );
+      allow delete: if isAdmin();
+
+      // Nested Favorites
+      match /favorites/{buildId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(buildId) && isValidFavorite(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidFavorite(incoming()) && incoming().createdAt == existing().createdAt;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Nested Building Progress
+      match /progress/{buildId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(buildId) && isValidProgress(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidProgress(incoming());
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+  }
+}
