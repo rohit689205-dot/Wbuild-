@@ -109,8 +109,9 @@ dependencies {
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
-  // Firestore:
+  // Firestore and Storage:
   implementation(libs.firebase.firestore)
+  implementation(libs.firebase.storage)
 
   // Firebase Auth and Google Sign-In via Credential Manager:
   implementation(libs.firebase.auth)

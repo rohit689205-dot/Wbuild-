@@ -230,7 +230,7 @@ fun StepViewerScreen(
           horizontalArrangement = Arrangement.SpaceBetween,
           verticalAlignment = Alignment.CenterVertically
         ) {
-          // Previous button
+          // Previous button (White Pill Button)
           Button(
             onClick = {
               if (currentStepIndex > 1) {
@@ -239,55 +239,55 @@ fun StepViewerScreen(
             },
             enabled = currentStepIndex > 1,
             colors = ButtonDefaults.buttonColors(
-              containerColor = WBuildsCardElevated,
-              disabledContainerColor = WBuildsCard.copy(alpha = 0.5f)
+              containerColor = Color.White,
+              disabledContainerColor = Color.White.copy(alpha = 0.4f)
             ),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.testTag("prev_step_button")
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier
+              .width(130.dp)
+              .height(48.dp)
+              .testTag("prev_step_button")
           ) {
             Icon(
-              imageVector = Icons.Default.NavigateBefore,
+              imageVector = Icons.AutoMirrored.Filled.ArrowBack,
               contentDescription = null,
-              tint = if (currentStepIndex > 1) WBuildsGold else WBuildsTextSecondary
+              tint = WBuildsBlack,
+              modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
-              text = "PREVIOUS",
-              color = if (currentStepIndex > 1) WBuildsTextPrimary else WBuildsTextSecondary,
+              text = "Back",
+              color = WBuildsBlack,
               fontWeight = FontWeight.Bold,
-              fontSize = 12.sp
+              fontSize = 14.sp
             )
           }
 
-          // Step count badge
-          Text(
-            text = "$currentStepIndex / $totalStepsCount",
-            color = WBuildsGold,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Black
-          )
-
-          // Next or Finish button
+          // Next or Finish button (White Pill Button)
           if (currentStepIndex < totalStepsCount) {
             Button(
               onClick = {
                 currentStepIndex++
               },
-              colors = ButtonDefaults.buttonColors(containerColor = WBuildsGold),
-              shape = RoundedCornerShape(10.dp),
-              modifier = Modifier.testTag("next_step_button")
+              colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+              shape = RoundedCornerShape(24.dp),
+              modifier = Modifier
+                .width(130.dp)
+                .height(48.dp)
+                .testTag("next_step_button")
             ) {
               Text(
-                text = "NEXT",
+                text = "Next",
                 color = WBuildsBlack,
-                fontWeight = FontWeight.Black,
-                fontSize = 12.sp
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
               )
-              Spacer(modifier = Modifier.width(4.dp))
+              Spacer(modifier = Modifier.width(6.dp))
               Icon(
                 imageVector = Icons.Default.NavigateNext,
                 contentDescription = null,
-                tint = WBuildsBlack
+                tint = WBuildsBlack,
+                modifier = Modifier.size(20.dp)
               )
             }
           } else {
@@ -296,13 +296,17 @@ fun StepViewerScreen(
                 viewModel.completeBuild(buildId, totalStepsCount.toLong())
               },
               colors = ButtonDefaults.buttonColors(containerColor = WBuildsSuccess),
-              shape = RoundedCornerShape(10.dp),
-              modifier = Modifier.testTag("complete_build_button")
+              shape = RoundedCornerShape(24.dp),
+              modifier = Modifier
+                .width(130.dp)
+                .height(48.dp)
+                .testTag("complete_build_button")
             ) {
               Icon(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
-                tint = WBuildsBlack
+                tint = WBuildsBlack,
+                modifier = Modifier.size(18.dp)
               )
               Spacer(modifier = Modifier.width(4.dp))
               Text(
@@ -566,44 +570,22 @@ fun StepViewerScreen(
 }
 
 @Composable
-fun BlockRequirementChip(name: String, quantity: Long) {
-  Box(
-    modifier = Modifier
-      .clip(RoundedCornerShape(8.dp))
-      .background(WBuildsDarkSurface)
-      .border(1.dp, WBuildsDivider, RoundedCornerShape(8.dp))
-      .padding(horizontal = 10.dp, vertical = 6.dp)
+fun BlockRequirementChip(name: String, quantity: Long, imageUrl: String = "") {
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = Modifier.padding(horizontal = 6.dp)
   ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically
-    ) {
-      Box(
-        modifier = Modifier
-          .size(14.dp)
-          .clip(RoundedCornerShape(2.dp))
-          .background(WBuildsGoldDark)
-      )
-      Spacer(modifier = Modifier.width(8.dp))
-      Text(
-        text = name,
-        color = WBuildsTextPrimary,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Medium
-      )
-      Spacer(modifier = Modifier.width(6.dp))
-      Box(
-        modifier = Modifier
-          .clip(RoundedCornerShape(4.dp))
-          .background(WBuildsGold)
-          .padding(horizontal = 6.dp, vertical = 2.dp)
-      ) {
-        Text(
-          text = "×$quantity",
-          color = WBuildsBlack,
-          fontSize = 11.sp,
-          fontWeight = FontWeight.Black
-        )
-      }
-    }
+    com.example.ui.components.MinecraftBlockIcon(
+      blockName = name,
+      imageUrl = imageUrl,
+      modifier = Modifier.size(42.dp)
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+      text = "x$quantity",
+      color = WBuildsTextSecondary,
+      fontSize = 12.sp,
+      fontWeight = FontWeight.Bold
+    )
   }
 }

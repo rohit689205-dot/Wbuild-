@@ -27,12 +27,16 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
-class WBuildsRepository(private val db: FirebaseFirestore) {
+class WBuildsRepository(
+  private val db: FirebaseFirestore,
+  private var storageManager: FirebaseStorageManager? = null
+) {
 
   constructor(context: Context) : this(
     FirebaseFirestore.getInstance(
       context.applicationContext.getString(R.string.firestore_database_id)
-    )
+    ),
+    FirebaseStorageManager(context.applicationContext)
   )
 
   private val auth = Firebase.auth
@@ -233,7 +237,8 @@ class WBuildsRepository(private val db: FirebaseFirestore) {
     build: BuildItem,
     stepImages: List<String>,
     selectedBlocks: List<Map<String, Any>>,
-    isPublished: Boolean
+    isPublished: Boolean,
+    onUploadProgress: (completed: Int, total: Int, percent: Int) -> Unit = { _, _, _ -> }
   ): String {
     require(isCurrentUserAdmin()) { "Only administrators can publish builds." }
     val uid = requireUserId()
@@ -241,8 +246,26 @@ class WBuildsRepository(private val db: FirebaseFirestore) {
     val docRef = if (isNew) db.collection("builds").document() else db.collection("builds").document(build.id)
     val buildId = docRef.id
 
+    // 1. Upload Thumbnail to Cloud Storage if local Uri
+    var finalThumbnailUrl = build.thumbnailUrl
+    val sm = storageManager
+    if (sm != null && (finalThumbnailUrl.startsWith("content:") || finalThumbnailUrl.startsWith("file:"))) {
+      finalThumbnailUrl = sm.uploadImageToStorage(finalThumbnailUrl, "builds/$buildId/thumbnail.jpg")
+    }
+
+    // 2. Batch Upload Tutorial Images to Cloud Storage
+    val finalStepUrls = if (sm != null && stepImages.any { it.startsWith("content:") || it.startsWith("file:") }) {
+      sm.batchUploadStepImages(buildId, stepImages, onUploadProgress)
+    } else {
+      stepImages
+    }
+
+    if (finalThumbnailUrl.isBlank() || finalThumbnailUrl == "img_minecraft_hero") {
+      finalThumbnailUrl = finalStepUrls.firstOrNull() ?: "img_minecraft_hero"
+    }
+
     val statusStr = if (isPublished) "published" else "draft"
-    val totalStepsCount = stepImages.size.toLong()
+    val totalStepsCount = finalStepUrls.size.toLong()
 
     val payload = mutableMapOf<String, Any>(
       "title" to build.title.ifBlank { "Untitled Build" },
@@ -253,7 +276,7 @@ class WBuildsRepository(private val db: FirebaseFirestore) {
       "edition" to build.edition.ifBlank { "Both" },
       "dimensions" to build.dimensions,
       "estimatedTime" to build.estimatedTime,
-      "thumbnailUrl" to build.thumbnailUrl.ifBlank { stepImages.firstOrNull() ?: "img_minecraft_hero" },
+      "thumbnailUrl" to finalThumbnailUrl,
       "featured" to build.featured,
       "status" to statusStr,
       "totalSteps" to totalStepsCount,
@@ -270,8 +293,8 @@ class WBuildsRepository(private val db: FirebaseFirestore) {
     }
 
     // Save/update tutorial step records in batches of 400
-    if (stepImages.isNotEmpty()) {
-      val chunks = stepImages.chunked(400)
+    if (finalStepUrls.isNotEmpty()) {
+      val chunks = finalStepUrls.chunked(400)
       var stepNum = 1L
       for (chunk in chunks) {
         val batch = db.batch()

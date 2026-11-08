@@ -105,8 +105,8 @@ fun BuildDetailsScreen(
             onClick = {
               viewModel.startBuilding(build.id, startStep = currentStep.toInt())
             },
-            colors = ButtonDefaults.buttonColors(containerColor = WBuildsGold),
-            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+            shape = RoundedCornerShape(28.dp),
             modifier = Modifier
               .fillMaxWidth()
               .height(54.dp)
@@ -123,8 +123,8 @@ fun BuildDetailsScreen(
               text = ctaText,
               color = WBuildsBlack,
               fontSize = 16.sp,
-              fontWeight = FontWeight.Black,
-              letterSpacing = 1.sp
+              fontWeight = FontWeight.Bold,
+              letterSpacing = 0.5.sp
             )
           }
         }
@@ -404,33 +404,30 @@ fun BuildDetailsScreen(
             colors = CardDefaults.cardColors(containerColor = WBuildsCard),
             shape = RoundedCornerShape(12.dp)
           ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
               build.selectedBlocks.forEach { blockMap ->
                 val bName = (blockMap["name"] as? String) ?: "Minecraft Block"
                 val bQty = (blockMap["quantity"] as? Number)?.toLong() ?: 1L
+                val bUrl = (blockMap["imageUrl"] as? String) ?: ""
                 Row(
-                  modifier = Modifier.fillMaxWidth(),
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(WBuildsCard)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                   horizontalArrangement = Arrangement.SpaceBetween,
                   verticalAlignment = Alignment.CenterVertically
                 ) {
                   Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                      modifier = Modifier
-                        .size(12.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(WBuildsGoldDark)
+                    com.example.ui.components.MinecraftBlockIcon(
+                      blockName = bName,
+                      imageUrl = bUrl,
+                      modifier = Modifier.size(36.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(bName, color = WBuildsTextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(bName, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                   }
-                  Box(
-                    modifier = Modifier
-                      .clip(RoundedCornerShape(4.dp))
-                      .background(WBuildsGold)
-                      .padding(horizontal = 6.dp, vertical = 2.dp)
-                  ) {
-                    Text("×$bQty", color = WBuildsBlack, fontSize = 11.sp, fontWeight = FontWeight.Black)
-                  }
+                  Text("x $bQty", color = WBuildsTextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
               }
             }

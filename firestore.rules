@@ -132,7 +132,7 @@ service cloud.firestore {
 
     // Build Steps
     match /buildSteps/{stepId} {
-      allow get, list: if resource.data.status == 'published' || isAdmin();
+      allow get, list: if true;
       allow create: if isAdmin() && isValidId(stepId) && isValidBuildStep(incoming());
       allow update: if isAdmin() && isValidBuildStep(incoming()) && incoming().createdAt == existing().createdAt;
       allow delete: if isAdmin();

@@ -209,19 +209,17 @@ fun CategoryChipsRow(
 ) {
   val scrollState = rememberScrollState()
 
-  // Standard category options from reference
   val allCategories = listOf(
+    Pair("favorites", "FAV"),
     Pair("all", "All"),
-    Pair("favorites", "Favorites"),
+    Pair("beacon", "Beacon"),
+    Pair("decoration", "Decoration"),
     Pair("farm", "Farm"),
-    Pair("medieval", "Medieval"),
+    Pair("furniture", "Furniture"),
     Pair("houses", "Houses"),
     Pair("mansions", "Mansions"),
     Pair("statues", "Statues"),
     Pair("animals", "Animals"),
-    Pair("decoration", "Decoration"),
-    Pair("furniture", "Furniture"),
-    Pair("beacon", "Beacon"),
     Pair("redstone", "Redstone"),
     Pair("survival", "Survival"),
     Pair("modern", "Modern")
@@ -232,30 +230,51 @@ fun CategoryChipsRow(
       .fillMaxWidth()
       .horizontalScroll(scrollState)
       .padding(horizontal = 12.dp, vertical = 6.dp),
-    horizontalArrangement = Arrangement.spacedBy(8.dp)
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalAlignment = Alignment.CenterVertically
   ) {
     allCategories.forEach { (catId, catName) ->
       val isSelected = selectedCategoryId.equals(catId, ignoreCase = true)
-      val bg = if (isSelected) WBuildsGold else WBuildsCard
-      val textColor = if (isSelected) WBuildsBlack else WBuildsTextSecondary
-      val border = if (isSelected) WBuildsGoldLight else WBuildsDivider
+      val bg = if (isSelected) Color.White else WBuildsCard
+      val textColor = if (isSelected) WBuildsBlack else WBuildsTextPrimary
 
-      Box(
-        modifier = Modifier
-          .clip(RoundedCornerShape(20.dp))
-          .background(bg)
-          .border(1.dp, border, RoundedCornerShape(20.dp))
-          .clickable { onCategorySelected(catId) }
-          .padding(horizontal = 14.dp, vertical = 7.dp)
-          .testTag("category_chip_$catId"),
-        contentAlignment = Alignment.Center
-      ) {
-        Text(
-          text = catName,
-          fontSize = 13.sp,
-          fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-          color = textColor
-        )
+      if (catId == "favorites") {
+        // Heart icon pill button on far left
+        Box(
+          modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (isSelected) WBuildsGold else WBuildsCard)
+            .border(1.dp, if (isSelected) WBuildsGold else WBuildsDivider, RoundedCornerShape(10.dp))
+            .clickable { onCategorySelected("favorites") }
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .testTag("category_chip_favorites"),
+          contentAlignment = Alignment.Center
+        ) {
+          Icon(
+            imageVector = if (isSelected) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+            contentDescription = "Favorites",
+            tint = if (isSelected) WBuildsBlack else WBuildsTextPrimary,
+            modifier = Modifier.size(18.dp)
+          )
+        }
+      } else {
+        Box(
+          modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(bg)
+            .border(1.dp, if (isSelected) Color.White else WBuildsDivider, RoundedCornerShape(10.dp))
+            .clickable { onCategorySelected(catId) }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .testTag("category_chip_$catId"),
+          contentAlignment = Alignment.Center
+        ) {
+          Text(
+            text = catName,
+            fontSize = 13.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = textColor
+          )
+        }
       }
     }
   }
@@ -271,18 +290,19 @@ fun BuildCard(
   Card(
     modifier = Modifier
       .fillMaxWidth()
-      .clip(RoundedCornerShape(12.dp))
+      .clip(RoundedCornerShape(16.dp))
       .clickable(onClick = onBuildClick)
-      .border(1.dp, WBuildsDivider, RoundedCornerShape(12.dp))
+      .border(1.dp, WBuildsDivider, RoundedCornerShape(16.dp))
       .testTag("build_card_${build.id}"),
-    colors = CardDefaults.cardColors(containerColor = WBuildsCard)
+    colors = CardDefaults.cardColors(containerColor = WBuildsBlack)
   ) {
     Column {
-      // Thumbnail Box with badges & favorite button
+      // Thumbnail Box with W BUILDS Golden Watermark
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .aspectRatio(1.25f)
+          .aspectRatio(0.95f)
+          .clip(RoundedCornerShape(16.dp))
       ) {
         BuildThumbnailImage(
           imageUrl = build.thumbnailUrl,
@@ -290,52 +310,32 @@ fun BuildCard(
           modifier = Modifier.fillMaxSize()
         )
 
-        // Gradient overlay
+        // Watermark Badge in Bottom Right corner
         Box(
           modifier = Modifier
-            .fillMaxSize()
-            .background(
-              Brush.verticalGradient(
-                colors = listOf(Color.Transparent, Color(0xAA000000)),
-                startY = 100f
-              )
-            )
-        )
-
-        // Edition badge (top left)
-        Row(
-          modifier = Modifier
-            .align(Alignment.TopStart)
-            .padding(8.dp),
-          horizontalArrangement = Arrangement.spacedBy(4.dp)
+            .align(Alignment.BottomEnd)
+            .padding(8.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color.Black.copy(alpha = 0.5f))
+            .padding(horizontal = 4.dp, vertical = 2.dp)
         ) {
-          Box(
-            modifier = Modifier
-              .clip(RoundedCornerShape(4.dp))
-              .background(WBuildsBlack.copy(alpha = 0.8f))
-              .padding(horizontal = 6.dp, vertical = 2.dp)
-          ) {
-            Text(
-              text = build.edition.uppercase(),
-              fontSize = 9.sp,
-              fontWeight = FontWeight.Bold,
-              color = WBuildsGold
-            )
-          }
-
-          if (build.difficulty.isNotBlank()) {
-            DifficultyPill(difficulty = build.difficulty)
-          }
+          Text(
+            text = "W BUILDS",
+            color = WBuildsGold,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 0.5.sp
+          )
         }
 
-        // Favorite Button (top right)
+        // Favorite Button top right (Subtle)
         Box(
           modifier = Modifier
             .align(Alignment.TopEnd)
             .padding(6.dp)
-            .size(32.dp)
+            .size(28.dp)
             .clip(CircleShape)
-            .background(WBuildsBlack.copy(alpha = 0.65f))
+            .background(WBuildsBlack.copy(alpha = 0.6f))
             .clickable(onClick = onFavoriteClick)
             .testTag("fav_button_${build.id}"),
           contentAlignment = Alignment.Center
@@ -343,70 +343,31 @@ fun BuildCard(
           Icon(
             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
             contentDescription = "Favorite",
-            tint = if (isFavorite) WBuildsGold else WBuildsTextSecondary,
-            modifier = Modifier.size(18.dp)
-          )
-        }
-
-        // Steps badge (bottom left)
-        Box(
-          modifier = Modifier
-            .align(Alignment.BottomStart)
-            .padding(8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(WBuildsGoldDark.copy(alpha = 0.9f))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-          Text(
-            text = "${build.totalSteps} STEPS",
-            fontSize = 9.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = WBuildsBlack
+            tint = if (isFavorite) WBuildsGold else Color.White,
+            modifier = Modifier.size(16.dp)
           )
         }
       }
 
-      // Title & Specifications
+      // Title & Subtitle Below Card Image
       Column(
-        modifier = Modifier.padding(10.dp)
+        modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
       ) {
         Text(
           text = build.title,
-          color = WBuildsTextPrimary,
+          color = Color.White,
           fontSize = 14.sp,
           fontWeight = FontWeight.Bold,
-          maxLines = 2,
+          maxLines = 1,
           overflow = TextOverflow.Ellipsis
         )
-        if (build.dimensions.isNotBlank() || build.estimatedTime.isNotBlank()) {
-          Spacer(modifier = Modifier.height(4.dp))
-          Row(
-            verticalAlignment = Alignment.CenterVertically
-          ) {
-            if (build.dimensions.isNotBlank()) {
-              Text(
-                text = build.dimensions,
-                color = WBuildsTextSecondary,
-                fontSize = 11.sp
-              )
-            }
-            if (build.dimensions.isNotBlank() && build.estimatedTime.isNotBlank()) {
-              Text(
-                text = " • ",
-                color = WBuildsTextSecondary,
-                fontSize = 11.sp
-              )
-            }
-            if (build.estimatedTime.isNotBlank()) {
-              Text(
-                text = build.estimatedTime,
-                color = WBuildsGold,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-              )
-            }
-          }
-        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+          text = "${build.totalSteps} build steps",
+          color = WBuildsTextSecondary,
+          fontSize = 12.sp,
+          fontWeight = FontWeight.Normal
+        )
       }
     }
   }
@@ -468,11 +429,16 @@ fun BuildThumbnailImage(
         contentScale = ContentScale.Crop
       )
     }
-    imageUrl.startsWith("http") || imageUrl.startsWith("content:") || imageUrl.startsWith("file:") -> {
+    imageUrl.startsWith("http://") || imageUrl.startsWith("https://") ||
+      imageUrl.startsWith("content:") || imageUrl.startsWith("file:") ||
+      imageUrl.startsWith("gs://") -> {
       AsyncImage(
         model = ImageRequest.Builder(context)
           .data(imageUrl)
           .crossfade(true)
+          .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+          .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+          .networkCachePolicy(coil.request.CachePolicy.ENABLED)
           .error(R.drawable.img_minecraft_hero)
           .placeholder(R.drawable.img_minecraft_hero)
           .build(),
@@ -486,6 +452,9 @@ fun BuildThumbnailImage(
         model = ImageRequest.Builder(context)
           .data(imageUrl)
           .crossfade(true)
+          .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+          .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+          .networkCachePolicy(coil.request.CachePolicy.ENABLED)
           .error(R.drawable.img_minecraft_hero)
           .placeholder(R.drawable.img_minecraft_hero)
           .build(),
@@ -500,6 +469,67 @@ fun BuildThumbnailImage(
         contentDescription = contentDescription,
         modifier = modifier,
         contentScale = ContentScale.Crop
+      )
+    }
+  }
+}
+
+@Composable
+fun MinecraftBlockIcon(
+  blockName: String,
+  imageUrl: String = "",
+  modifier: Modifier = Modifier.size(36.dp)
+) {
+  val context = LocalContext.current
+  if (imageUrl.startsWith("http") || imageUrl.startsWith("content:") || imageUrl.startsWith("file:") || imageUrl.startsWith("gs:")) {
+    AsyncImage(
+      model = ImageRequest.Builder(context)
+        .data(imageUrl)
+        .crossfade(true)
+        .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+        .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+        .networkCachePolicy(coil.request.CachePolicy.ENABLED)
+        .error(R.drawable.img_minecraft_hero)
+        .placeholder(R.drawable.img_minecraft_hero)
+        .build(),
+      contentDescription = blockName,
+      modifier = modifier.clip(RoundedCornerShape(6.dp)),
+      contentScale = ContentScale.Crop
+    )
+  } else {
+    val (primaryColor, accentColor) = when {
+      blockName.contains("Stone", ignoreCase = true) || blockName.contains("Andesite", ignoreCase = true) || blockName.contains("Cobble", ignoreCase = true) -> Pair(Color(0xFF888888), Color(0xFF666666))
+      blockName.contains("Oak", ignoreCase = true) || blockName.contains("Planks", ignoreCase = true) || blockName.contains("Barrel", ignoreCase = true) -> Pair(Color(0xFFA0764A), Color(0xFF6E4D2B))
+      blockName.contains("Spruce", ignoreCase = true) -> Pair(Color(0xFF61442B), Color(0xFF3F2B1A))
+      blockName.contains("Dirt", ignoreCase = true) || blockName.contains("Farmland", ignoreCase = true) -> Pair(Color(0xFF573D26), Color(0xFF3D2A1A))
+      blockName.contains("Glass", ignoreCase = true) -> Pair(Color(0xC0A2D2FF), Color(0xFF64B5F6))
+      blockName.contains("Water", ignoreCase = true) -> Pair(Color(0xFF29B6F6), Color(0xFF0288D1))
+      blockName.contains("Lantern", ignoreCase = true) || blockName.contains("Torch", ignoreCase = true) || blockName.contains("Candle", ignoreCase = true) -> Pair(Color(0xFFFFB74D), Color(0xFFF57C00))
+      blockName.contains("Diamond", ignoreCase = true) -> Pair(Color(0xFF4DD0E1), Color(0xFF00ACC1))
+      blockName.contains("Gold", ignoreCase = true) -> Pair(Color(0xFFFFD54F), Color(0xFFFFB300))
+      blockName.contains("Emerald", ignoreCase = true) -> Pair(Color(0xFF81C784), Color(0xFF43A047))
+      blockName.contains("Redstone", ignoreCase = true) -> Pair(Color(0xFFE57373), Color(0xFFE53935))
+      blockName.contains("Carrot", ignoreCase = true) -> Pair(Color(0xFFFF9800), Color(0xFF4CAF50))
+      blockName.contains("Cauldron", ignoreCase = true) || blockName.contains("Chest", ignoreCase = true) -> Pair(Color(0xFF424242), Color(0xFF212121))
+      else -> Pair(WBuildsGoldDark, WBuildsGold)
+    }
+
+    Box(
+      modifier = modifier
+        .clip(RoundedCornerShape(6.dp))
+        .background(
+          Brush.verticalGradient(
+            colors = listOf(primaryColor, accentColor)
+          )
+        )
+        .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(6.dp)),
+      contentAlignment = Alignment.Center
+    ) {
+      Text(
+        text = blockName.take(2).uppercase(),
+        color = Color.White,
+        fontWeight = FontWeight.Black,
+        fontSize = 10.sp
       )
     }
   }
